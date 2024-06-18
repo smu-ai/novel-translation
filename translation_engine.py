@@ -2,8 +2,8 @@ import os
 import re
 import pandas as pd
 from datasets import load_dataset
-from transformers import TextStreamer
 from unsloth import FastLanguageModel
+from transformers import TextStreamer
 from tqdm import tqdm
 from transformers import TextStreamer
 import evaluate
@@ -66,7 +66,7 @@ def load_translation_dataset(data_path, tokenizer=None):
     )
 
     if tokenizer:
-        translation_prompt = "Translate from Chinese to English.\n{}"
+        translation_prompt = "Please translate the following Chinese text into English and provide only the translated content, nothing else.\n{}"
 
         def formatting_prompts_func(examples):
             inputs = examples["chinese"]
@@ -79,7 +79,7 @@ def load_translation_dataset(data_path, tokenizer=None):
                 messages = [
                     {
                         "role": "system",
-                        "content": "You are an expert in translating Chinese into English.",
+                        "content": "You are an expert in translating Chinese to English.",
                     },
                     {"role": "user", "content": prompt},
                 ]
@@ -172,7 +172,7 @@ def save_results(model_name, results_path, dataset, predictions, debug=False):
         df = dataset.to_pandas()
         df.drop(columns=["text", "prompt"], inplace=True)
     else:
-        df = pd.read_csv(results_path)
+        df = pd.read_csv(results_path, on_bad_lines="warn")
 
     df[model_name] = predictions
 
