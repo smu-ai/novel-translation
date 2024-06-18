@@ -11,8 +11,8 @@ cat /etc/os-release
 lscpu
 grep MemTotal /proc/meminfo
 
-pip install -r requirements.txt
-FLASH_ATTENTION_FORCE_BUILD=TRUE pip install --quiet --upgrade flash-attn
+# pip install -r requirements.txt
+# FLASH_ATTENTION_FORCE_BUILD=TRUE pip install --upgrade flash-attn
 
 export MODEL_NAME=unsloth/Qwen2-7B-Instruct
 echo Tuning $MODEL_NAME
