@@ -15,6 +15,7 @@ def load_model(model_name, max_seq_length=2048, dtype=None, load_in_4bit=False):
         max_seq_length=max_seq_length,
         dtype=dtype,
         load_in_4bit=load_in_4bit,
+        trust_remote_code=True,
     )
     FastLanguageModel.for_inference(model)
 
@@ -114,6 +115,7 @@ def extract_answer(text, debug=False):
 
 bleu = evaluate.load("bleu")
 rouge = evaluate.load("rouge")
+meteor = evaluate.load("meteor")
 accuracy = evaluate.load("accuracy")
 
 
@@ -129,6 +131,10 @@ def calc_metrics(references, predictions, debug=False):
     if debug:
         correct_ids = [i for i, c in enumerate(correct) if c == 1]
         results["correct_ids"] = correct_ids
+
+    results["meteor"] = meteor.compute(predictions=predictions, references=references)[
+        "meteor"
+    ]
 
     results["bleu_scores"] = bleu.compute(
         predictions=predictions, references=references, max_order=4
@@ -154,3 +160,23 @@ def eval_model(model, tokenizer, eval_dataset):
         predictions.extend(decoded_output)
 
     return predictions
+
+
+def save_results(model_name, results_path, dataset, predictions, debug=False):
+    if not os.path.exists(results_path):
+        # Get the directory part of the file path
+        dir_path = os.path.dirname(results_path)
+
+        # Create all directories in the path (if they don't exist)
+        os.makedirs(dir_path, exist_ok=True)
+        df = dataset.to_pandas()
+        df.drop(columns=["text", "prompt"], inplace=True)
+    else:
+        df = pd.read_csv(results_path)
+
+    df[model_name] = predictions
+
+    if debug:
+        print(df.head(1))
+
+    df.to_csv(results_path, index=False)
