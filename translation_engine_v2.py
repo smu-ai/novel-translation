@@ -23,15 +23,14 @@ def load_model(model_id, max_seq_length=2048, dtype=None, load_in_4bit=False):
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=False,
+        bnb_4bit_use_double_quant=True,
     )
 
     # Load base model
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         quantization_config=bnb_config,
-        # use the gpu
-        device_map={"": 0},
+        device_map="auto",
     )
 
     # don't use the cache
