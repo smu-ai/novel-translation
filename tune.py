@@ -111,9 +111,14 @@ print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
 print(f"Peak reserved memory % of max memory = {used_percentage} %.")
 print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
 
+if save_fine_tuned_model:
+    save_model(model, tokenizer, "merged_4bit_forced")
+    save_model_gguf(model, tokenizer, quantization_method="q5_k_m")
+
 if eval_fine_tuned:
     print("Evaluating fine-tuned model: " + model_name)
-    predictions = eval_model(model, tokenizer, datasets["test"])
+    with torch.cuda.amp.autocast():
+        predictions = eval_model(model, tokenizer, datasets["test"])
     calc_metrics(datasets["test"]["english"], predictions, debug=True)
 
     save_results(
@@ -130,6 +135,3 @@ max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
 print(f"(6) GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
 print(f"{start_gpu_memory} GB of memory reserved.")
 
-if save_fine_tuned_model:
-    save_model(model, tokenizer, "merged_4bit_forced")
-    save_model_gguf(model, tokenizer, quantization_method="q5_k_m")
