@@ -25,6 +25,8 @@ dtype = (
     None  # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
 )
 
+model_name = get_model_names(model_name)["local"]
+
 print(
     model_name,
     load_in_4bit,
@@ -33,8 +35,6 @@ print(
     dtype,
     data_path,
     results_path,
-    eval_base_model,
-    eval_fine_tuned,
     save_fine_tuned_model,
 )
 

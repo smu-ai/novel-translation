@@ -11,9 +11,27 @@ from tqdm import tqdm
 print(f"loading {__file__}")
 
 
-def load_model(model_name, max_seq_length=2048, dtype=None, load_in_4bit=False):
-    # if not dtype:
-    # dtype = torch.bfloat16 if is_bfloat16_supported() else torch.float16
+def get_model_names(
+    model_name, save_method="merged_4bit_forced", quantization_method="q5_k_m"
+):
+    hub_model = model_name.split("/")[-1] + "-MAC-"
+    local_model = "models/" + hub_model
+
+    return {
+        "local": local_model + save_method,
+        "local-gguf": local_model + quantization_method,
+        "hub": hub_model + save_method,
+        "hub-gguf": hub_model + "gguf-" + quantization_method,
+    }
+
+
+def load_model(
+    model_name,
+    max_seq_length=2048,
+    dtype=None,
+    load_in_4bit=False,
+):
+    print(f"loading model: {model_name}")
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_name,  # YOUR MODEL YOU USED FOR TRAINING
@@ -195,35 +213,38 @@ def eval_model(model, tokenizer, eval_dataset):
     return predictions
 
 
-def save_model(model, tokenizer, save_method="merged_4bit_forced", publish=True):
-    model_name = os.getenv("MODEL_NAME")
+def save_model(
+    model,
+    tokenizer,
+    save_method="merged_4bit_forced",
+    quantization_method="q5_k_m",
+    publish=True,
+):
     token = os.getenv("HF_TOKEN") or None
-    hub_model = model_name.split("/")[-1] + "-MAC-" + save_method
-    local_model = "models/" + hub_model
+    model_name = os.getenv("MODEL_NAME")
+    model_names = get_model_names(model_name)
 
     model.save_pretrained_merged(
-        local_model + save_method,
+        model_names["local"],
         tokenizer,
         save_method=save_method,
     )
 
     model.save_pretrained_gguf(
-        local_model + quantization_method,
+        model_names["local-gguf"],
         tokenizer,
         quantization_method=quantization_method,
     )
 
-    quantization_method = "q5_k_m"
-
     if publish:
         model.push_to_hub_merged(
-            hub_model + save_method,
+            model_names["hub"],
             tokenizer,
             save_method=save_method,
             token=token,
         )
         model.push_to_hub_gguf(
-            hub_model + "gguf-" + quantization_method,
+            model_names["hub-gguf"],
             tokenizer,
             quantization_method=quantization_method,
             token=token,
