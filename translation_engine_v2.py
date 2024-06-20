@@ -212,38 +212,21 @@ def eval_model(model, tokenizer, eval_dataset):
     return predictions
 
 
-def save_model(model, tokenizer, save_method, gguf=False, publish=True):
+def save_model(model, tokenizer, save_method="finetuned", publish=True):
     model_name = os.getenv("MODEL_NAME")
     token = os.getenv("HF_TOKEN") or None
-    hub_model = model_name.split("/")[-1] + "-MAC-"
+    hub_model = model_name.split("/")[-1] + "-MAC-" + save_method
     local_model = "models/" + hub_model
+    model.save_pretrained(local_model)
 
-    if gguf:
-        quantization_method = save_method
-        model.save_pretrained_gguf(
-            local_model + quantization_method,
-            tokenizer,
-            quantization_method=quantization_method,
+    if publish:
+        # Reload model in FP16 and merge it with LoRA weights
+        base_model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            low_cpu_mem_usage=True,
+            return_dict=True,
+            torch_dtype=torch.float16,
+            device_map={"": 0},
         )
-
-        if publish:
-            model.push_to_hub_gguf(
-                hub_model + "gguf-" + quantization_method,
-                tokenizer,
-                quantization_method=quantization_method,
-                token=token,
-            )
-    else:
-        model.save_pretrained_merged(
-            local_model + save_method,
-            tokenizer,
-            save_method=save_method,
-        )
-
-        if publish:
-            model.push_to_hub_merged(
-                hub_model + save_method,
-                tokenizer,
-                save_method=save_method,
-                token=token,
-            )
+        model = PeftModel.from_pretrained(base_model, local_model)
+        model = model.merge_and_unload()
