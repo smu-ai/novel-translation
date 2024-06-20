@@ -14,10 +14,11 @@ grep MemTotal /proc/meminfo
 # pip install -r requirements.txt
 # FLASH_ATTENTION_FORCE_BUILD=TRUE pip install --upgrade flash-attn
 
+export MODEL_NAME=gradientai/Llama-3-8B-Instruct-Gradient-1048k
+echo Tuning $MODEL_NAME
+python tune.py
+
 export MODEL_NAME=unsloth/Qwen2-7B-Instruct-bnb-4bit
 echo Tuning $MODEL_NAME
 python tune.py
 
-export MODEL_NAME=gradientai/Llama-3-8B-Instruct-Gradient-1048k
-echo Tuning $MODEL_NAME
-python tune.py
