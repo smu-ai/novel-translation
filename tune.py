@@ -4,7 +4,7 @@ from unsloth import is_bfloat16_supported
 from trl import SFTTrainer
 from transformers import TrainingArguments
 from dotenv import find_dotenv, load_dotenv
-from translation_engine import *
+from translation_engine_v2 import *
 from translation_utils import *
 
 found_dotenv = find_dotenv(".env")
