@@ -210,3 +210,40 @@ def eval_model(model, tokenizer, eval_dataset):
         predictions.extend(decoded_output)
 
     return predictions
+
+
+def save_model(model, tokenizer, save_method, gguf=False, publish=True):
+    model_name = os.getenv("MODEL_NAME")
+    token = os.getenv("HF_TOKEN") or None
+    hub_model = model_name.split("/")[-1] + "-MAC-"
+    local_model = "models/" + hub_model
+
+    if gguf:
+        quantization_method = save_method
+        model.save_pretrained_gguf(
+            local_model + quantization_method,
+            tokenizer,
+            quantization_method=quantization_method,
+        )
+
+        if publish:
+            model.push_to_hub_gguf(
+                hub_model + "gguf-" + quantization_method,
+                tokenizer,
+                quantization_method=quantization_method,
+                token=token,
+            )
+    else:
+        model.save_pretrained_merged(
+            local_model + save_method,
+            tokenizer,
+            save_method=save_method,
+        )
+
+        if publish:
+            model.push_to_hub_merged(
+                hub_model + save_method,
+                tokenizer,
+                save_method=save_method,
+                token=token,
+            )
