@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 import evaluate
 
@@ -8,10 +9,32 @@ meteor = evaluate.load("meteor")
 accuracy = evaluate.load("accuracy")
 
 
+def extract_answer(text, debug=False):
+    if text:
+        # Remove the begin and end tokens
+        text = re.sub(r".*?assistant.+?\b", "", text, flags=re.DOTALL | re.MULTILINE)
+        if debug:
+            print("--------\nstep 1:", text)
+
+        text = re.sub(r"<\|.*?\|>.*", "", text, flags=re.DOTALL | re.MULTILINE)
+        if debug:
+            print("--------\nstep 2:", text)
+
+        text = re.sub(
+            r".*?end_header_id\|>\n\n", "", text, flags=re.DOTALL | re.MULTILINE
+        )
+        if debug:
+            print("--------\nstep 3:", text)
+
+    return text
+
+
 def calc_metrics(references, predictions, debug=False):
     assert len(references) == len(
         predictions
     ), f"lengths are difference: {len(references)} != {len(predictions)}"
+
+    predictions = [extract_answer(text) for text in predictions]
 
     correct = [1 if ref == pred else 0 for ref, pred in zip(references, predictions)]
     accuracy = sum(correct) / len(references)

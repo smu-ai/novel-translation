@@ -1,5 +1,4 @@
 import os
-import re
 import pandas as pd
 from datasets import load_dataset
 import torch
@@ -7,6 +6,7 @@ from unsloth import FastLanguageModel, is_bfloat16_supported
 from trl import SFTTrainer
 from transformers import TrainingArguments, TextStreamer
 from tqdm import tqdm
+from translation_utils import *
 
 print(f"loading {__file__}")
 
@@ -180,20 +180,6 @@ def load_translation_dataset(data_path, tokenizer=None):
 
     print(datasets)
     return datasets
-
-
-def extract_answer(text, debug=False):
-    if text:
-        # Remove the begin and end tokens
-        text = re.sub(r".*?assistant.+?\b", "", text, flags=re.DOTALL | re.MULTILINE)
-        if debug:
-            print("--------\nstep 1:", text)
-
-        text = re.sub(r"<\|.*?\|>.*", "", text, flags=re.DOTALL | re.MULTILINE)
-        if debug:
-            print("--------\nstep 2:", text)
-    # Return the result
-    return text
 
 
 def eval_model(model, tokenizer, eval_dataset):
