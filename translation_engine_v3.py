@@ -2,45 +2,28 @@ import os
 import re
 import pandas as pd
 from datasets import load_dataset
-from tqdm import tqdm
 import torch
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    HfArgumentParser,
-    TrainingArguments,
-    pipeline,
-    TextStreamer,
-)
-from peft import LoraConfig, PeftModel
+from unsloth import FastLanguageModel, is_bfloat16_supported
 from trl import SFTTrainer
+from transformers import TrainingArguments, TextStreamer
+from tqdm import tqdm
 
 print(f"loading {__file__}")
 
 
-def load_model(model_id, max_seq_length=2048, dtype=None, load_in_4bit=False):
-    # load the quantized settings, we're doing 4 bit quantization
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=True,
+def load_model(model_name, max_seq_length=2048, dtype=None, load_in_4bit=False):
+    # if not dtype:
+    # dtype = torch.bfloat16 if is_bfloat16_supported() else torch.float16
+
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=model_name,  # YOUR MODEL YOU USED FOR TRAINING
+        max_seq_length=max_seq_length,
+        dtype=dtype,
+        load_in_4bit=load_in_4bit,
+        trust_remote_code=True,
     )
+    FastLanguageModel.for_inference(model)
 
-    # Load base model
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        quantization_config=bnb_config,
-        device_map="auto",
-    )
-
-    # don't use the cache
-    model.config.use_cache = False
-
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    tokenizer.padding_side = "right"
-    tokenizer.pad_token = tokenizer.eos_token
     return model, tokenizer
 
 
@@ -62,33 +45,14 @@ def load_trainer(
     tokenizer,
     dataset,
     num_train_epochs,
+    max_seq_length=2048,
     fp16=False,
     bf16=False,
     output_dir="./outputs",
 ):
-    # Set training parameters
-    training_arguments = TrainingArguments(
-        output_dir=output_dir,
-        num_train_epochs=num_train_epochs,  # uses the number of epochs earlier
-        per_device_train_batch_size=2,  # 2 seems reasonable (made smaller due to CUDA memory issues)
-        gradient_accumulation_steps=2,  # 2 is fine, as we're a small batch
-        optim="paged_adamw_32bit",  # default optimizer
-        save_steps=0,  # we're not gonna save
-        logging_steps=10,  # same value as used by Meta
-        learning_rate=2e-4,  # standard learning rate
-        weight_decay=0.001,  # standard weight decay 0.001
-        fp16=fp16,  # set to true for A100
-        bf16=bf16,  # set to true for A100
-        max_grad_norm=0.3,  # standard setting
-        max_steps=-1,  # needs to be -1, otherwise overrides epochs
-        warmup_ratio=0.03,  # standard warmup ratio
-        group_by_length=True,  # speeds up the training
-        lr_scheduler_type="cosine",  # constant seems better than cosine
-        # report_to="tensorboard",
-    )
-
-    # Load LoRA configuration
-    peft_config = LoraConfig(
+    model = FastLanguageModel.get_peft_model(
+        model,
+        r=16,  # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
         target_modules=[
             "q_proj",
             "k_proj",
@@ -99,23 +63,41 @@ def load_trainer(
             "down_proj",
         ],
         lora_alpha=16,
-        lora_dropout=0.1,
-        r=64,
-        bias="none",
-        task_type="CAUSAL_LM",
+        lora_dropout=0,  # Supports any, but = 0 is optimized
+        bias="none",  # Supports any, but = "none" is optimized
+        # [NEW] "unsloth" uses 30% less VRAM, fits 2x larger batch sizes!
+        use_gradient_checkpointing="unsloth",  # True or "unsloth" for very long context
+        random_state=3407,
+        use_rslora=False,  # We support rank stabilized LoRA
+        loftq_config=None,  # And LoftQ
     )
 
-    # Set supervised fine-tuning parameters
-    return SFTTrainer(
+    trainer = SFTTrainer(
         model=model,
+        tokenizer=tokenizer,
         train_dataset=dataset,
-        peft_config=peft_config,  # use our lora peft config
         dataset_text_field="text",
-        max_seq_length=None,  # no max sequence length
-        tokenizer=tokenizer,  # use the llama tokenizer
-        args=training_arguments,  # use the training arguments
-        packing=False,  # don't need packing
+        max_seq_length=max_seq_length,
+        dataset_num_proc=2,
+        packing=False,  # Can make training 5x faster for short sequences.
+        args=TrainingArguments(
+            per_device_train_batch_size=2,
+            gradient_accumulation_steps=4,
+            warmup_steps=5,
+            num_train_epochs=num_train_epochs,
+            learning_rate=2e-4,
+            fp16=not is_bfloat16_supported(),
+            bf16=is_bfloat16_supported(),
+            logging_steps=100,
+            optim="adamw_8bit",
+            weight_decay=0.01,
+            lr_scheduler_type="linear",
+            seed=3407,
+            output_dir=output_dir,
+        ),
     )
+
+    return trainer
 
 
 def load_translation_dataset(data_path, tokenizer=None):
@@ -213,21 +195,36 @@ def eval_model(model, tokenizer, eval_dataset):
     return predictions
 
 
-def save_model(model, tokenizer, save_method="finetuned", publish=True):
+def save_model(model, tokenizer, save_method="merged_4bit_forced", publish=True):
     model_name = os.getenv("MODEL_NAME")
     token = os.getenv("HF_TOKEN") or None
     hub_model = model_name.split("/")[-1] + "-MAC-" + save_method
     local_model = "models/" + hub_model
-    model.save_pretrained(local_model)
+
+    model.save_pretrained_merged(
+        local_model + save_method,
+        tokenizer,
+        save_method=save_method,
+    )
+
+    model.save_pretrained_gguf(
+        local_model + quantization_method,
+        tokenizer,
+        quantization_method=quantization_method,
+    )
+
+    quantization_method = "q5_k_m"
 
     if publish:
-        # Reload model in FP16 and merge it with LoRA weights
-        base_model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            low_cpu_mem_usage=True,
-            return_dict=True,
-            torch_dtype=torch.float16,
-            device_map={"": 0},
+        model.push_to_hub_merged(
+            hub_model + save_method,
+            tokenizer,
+            save_method=save_method,
+            token=token,
         )
-        model = PeftModel.from_pretrained(base_model, local_model)
-        model = model.merge_and_unload()
+        model.push_to_hub_gguf(
+            hub_model + "gguf-" + quantization_method,
+            tokenizer,
+            quantization_method=quantization_method,
+            token=token,
+        )

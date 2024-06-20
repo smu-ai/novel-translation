@@ -7,6 +7,8 @@ from transformers import TextStreamer
 from tqdm import tqdm
 from transformers import TextStreamer
 
+print(f"loading {__file__}")
+
 
 def load_model(model_name, max_seq_length=2048, dtype=None, load_in_4bit=False):
     model, tokenizer = FastLanguageModel.from_pretrained(

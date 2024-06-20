@@ -1,7 +1,7 @@
 import os
 import torch
 from dotenv import find_dotenv, load_dotenv
-from translation_engine_v2 import *
+from translation_engine_v3 import *
 from translation_utils import *
 
 found_dotenv = find_dotenv(".env")
@@ -44,7 +44,7 @@ max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
 print(f"(1) GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
 print(f"{start_gpu_memory} GB of memory reserved.")
 
-model, tokenizer = load_model(model_name, load_in_4bit)
+model, tokenizer = load_model(model_name, load_in_4bit=load_in_4bit)
 
 gpu_stats = torch.cuda.get_device_properties(0)
 start_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
