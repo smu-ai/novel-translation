@@ -1,1 +1,1 @@
-tune-medium.sh
+tune-mistral.sh
