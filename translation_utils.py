@@ -16,7 +16,7 @@ def extract_answer(text, debug=False):
         if debug:
             print("--------\nstep 1:", text)
 
-        text = re.sub(r"<\|.*?\|>.*", "", text, flags=re.DOTALL | re.MULTILINE)
+        text = re.sub(r"<.+?>.*", "", text, flags=re.DOTALL | re.MULTILINE)
         if debug:
             print("--------\nstep 2:", text)
 
