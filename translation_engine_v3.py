@@ -204,6 +204,7 @@ def save_model(
     tokenizer,
     save_method="merged_4bit_forced",
     quantization_method="q5_k_m",
+    include_gguf=False,
     publish=True,
 ):
     token = os.getenv("HF_TOKEN") or None
@@ -216,11 +217,12 @@ def save_model(
         save_method=save_method,
     )
 
-    model.save_pretrained_gguf(
-        model_names["local-gguf"],
-        tokenizer,
-        quantization_method=quantization_method,
-    )
+    if include_gguf:
+        model.save_pretrained_gguf(
+            model_names["local-gguf"],
+            tokenizer,
+            quantization_method=quantization_method,
+        )
 
     if publish:
         model.push_to_hub_merged(
@@ -229,9 +231,10 @@ def save_model(
             save_method=save_method,
             token=token,
         )
-        model.push_to_hub_gguf(
-            model_names["hub-gguf"],
-            tokenizer,
-            quantization_method=quantization_method,
-            token=token,
-        )
+        if include_gguf:
+            model.push_to_hub_gguf(
+                model_names["hub-gguf"],
+                tokenizer,
+                quantization_method=quantization_method,
+                token=token,
+            )
