@@ -21,4 +21,4 @@ setup:
 install:
 	pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
 	pip install --no-deps "trl<0.9.0" peft accelerate bitsandbytes
-	pip install -r requirements-unsloth.txt
+	pip install -r requirements.txt
