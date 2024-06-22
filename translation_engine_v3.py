@@ -155,17 +155,25 @@ def load_translation_dataset(data_path, tokenizer=None):
             inputs = examples["chinese"]
             outputs = examples["english"]
 
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an expert in translating Chinese to English.",
+                },
+                None,
+            ]
+
+            model_name = os.getenv("MODEL_NAME")
+
+            if "mistral" in model_name.lower():
+                messages = messages[1:]
+
             texts = []
             prompts = []
             for input, output in zip(inputs, outputs):
                 prompt = translation_prompt.format(input)
-                messages = [
-                    {
-                        "role": "system",
-                        "content": "You are an expert in translating Chinese to English.",
-                    },
-                    {"role": "user", "content": prompt},
-                ]
+                messages[-1] = {"role": "user", "content": prompt}
+
                 prompt = tokenizer.apply_chat_template(
                     messages, tokenize=False, add_generation_prompt=True
                 )
