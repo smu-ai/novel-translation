@@ -58,7 +58,7 @@ if eval_base_model:
     print("Evaluating base model: " + model_name)
     predictions = eval_model(model, tokenizer, datasets["test"])
 
-    calc_metrics(datasets["test"]["english"], predictions, debug=True)
+    # calc_metrics(datasets["test"]["english"], predictions, debug=True)
 
     save_results(
         model_name,
@@ -114,9 +114,9 @@ print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.
 if eval_fine_tuned:
     print("Evaluating fine-tuned model: " + model_name)
     FastLanguageModel.for_inference(model)  # Enable native 2x faster inference
-    # with torch.cuda.amp.autocast():
     predictions = eval_model(model, tokenizer, datasets["test"])
-    calc_metrics(datasets["test"]["english"], predictions, debug=True)
+    
+    # calc_metrics(datasets["test"]["english"], predictions, debug=True)
 
     save_results(
         model_name + "(finetuned)",
