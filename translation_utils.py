@@ -12,7 +12,9 @@ accuracy = evaluate.load("accuracy")
 def extract_answer(text, debug=False):
     if text:
         # Remove the begin and end tokens
-        text = re.sub(r".*?assistant.+?\b", "", text, flags=re.DOTALL | re.MULTILINE)
+        text = re.sub(
+            r".*?(assistant|\[/INST\]).+?\b", "", text, flags=re.DOTALL | re.MULTILINE
+        )
         if debug:
             print("--------\nstep 1:", text)
 

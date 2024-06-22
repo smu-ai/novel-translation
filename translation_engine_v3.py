@@ -193,7 +193,10 @@ def eval_model(model, tokenizer, eval_dataset):
 
         outputs = model.generate(**inputs, max_new_tokens=4096, use_cache=False)
         decoded_output = tokenizer.batch_decode(outputs)
-        decoded_output = [extract_answer(output) for output in decoded_output]
+        debug = i == 0
+        decoded_output = [
+            extract_answer(output, debug=debug) for output in decoded_output
+        ]
         predictions.extend(decoded_output)
 
     return predictions
