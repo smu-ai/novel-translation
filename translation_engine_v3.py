@@ -213,39 +213,59 @@ def eval_model(model, tokenizer, eval_dataset):
 def save_model(
     model,
     tokenizer,
-    save_method="merged_4bit_forced",
-    quantization_method="q5_k_m",
-    include_gguf=False,
+    include_gguf=True,
+    include_merged=True,
     publish=True,
 ):
-    token = os.getenv("HF_TOKEN") or None
-    model_name = os.getenv("MODEL_NAME")
-    model_names = get_model_names(model_name)
+    try:
+        token = os.getenv("HF_TOKEN") or None
+        model_name = os.getenv("MODEL_NAME")
 
-    model.save_pretrained_merged(
-        model_names["local"],
-        tokenizer,
-        save_method=save_method,
-    )
+        save_method = "lora"
+        quantization_method = "q5_k_m"
 
-    if include_gguf:
-        model.save_pretrained_gguf(
-            model_names["local-gguf"],
-            tokenizer,
-            quantization_method=quantization_method,
+        model_names = get_model_names(
+            model_name, save_method=save_method, quantization_method=quantization_method
         )
 
-    if publish:
-        model.push_to_hub_merged(
-            model_names["hub"],
-            tokenizer,
-            save_method=save_method,
-            token=token,
-        )
-        if include_gguf:
-            model.push_to_hub_gguf(
-                model_names["hub-gguf"],
-                tokenizer,
-                quantization_method=quantization_method,
+        model.save_pretrained(model_names["local"])
+        tokenizer.save_pretrained(model_names["local"])
+
+        if publish:
+            model.push_to_hub(
+                model_names["hub"],
                 token=token,
             )
+            tokenizer.push_to_hub(
+                model_names["hub"],
+                token=token,
+            )
+
+        if include_merged:
+            model.save_pretrained_merged(
+                model_names["local"] + "-merged", tokenizer, save_method=save_method
+            )
+            if publish:
+                model.push_to_hub_merged(
+                    model_names["hub"] + "-merged",
+                    tokenizer,
+                    save_method="lora",
+                    token="",
+                )
+
+        if include_gguf:
+            model.save_pretrained_gguf(
+                model_names["local-gguf"],
+                tokenizer,
+                quantization_method=quantization_method,
+            )
+
+            if publish:
+                model.push_to_hub_gguf(
+                    model_names["hub-gguf"],
+                    tokenizer,
+                    quantization_method=quantization_method,
+                    token=token,
+                )
+    except Exception as e:
+        print(e)
