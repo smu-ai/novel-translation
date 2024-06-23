@@ -25,6 +25,13 @@ The source code is located in the [llm_transaction](llm_transaction) folder and 
   - [translation_utils.py](llm_transaction/translation_utils.py)
 - [translation_engine.py](llm_transaction/translation_engine.py): Used by Jupyter [notebooks](notebooks) only
 
+## Scripts
+
+There are two shell scripts in the [scripts](scripts) folder to set up environment variables and invoke [tune.py](../llm_transaction/tune.py):
+
+- [tune-small.sh](scripts/tune-small.sh): Evaluates and tunes Qwen-0.5B and Qwen-1.5B (executed on a laptop)
+- [tune-medium.sh](scripts/tune-medium.sh): Evaluates and tunes Qwen-7B, Mistral-7B, and Llama-3-8B (executed in SMU GPU cluster)
+
 ## Jupyter Notebooks
 
 The [notebooks](notebooks) folder contains the following Jupyter notebook files:
@@ -80,5 +87,5 @@ pip install -r requirements.txt
 5. Run upyter notebooks or the automated script:
 
 ```
-python tune.py
+./scripts/tune-small.sh
 ```
