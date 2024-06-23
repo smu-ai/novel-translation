@@ -7,8 +7,8 @@ pwd
 
 export MODEL_NAME=unsloth/Qwen2-0.5B-Instruct-bnb-4bit
 echo Tuning $MODEL_NAME
-python tune.py
+python llm_transaction/tune.py
 
 export MODEL_NAME=unsloth/Qwen2-1.5B-Instruct-bnb-4bit
 echo Tuning $MODEL_NAME
-python tune.py
+python llm_transaction/tune.py

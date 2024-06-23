@@ -1,8 +1,8 @@
 import os
 import torch
 from dotenv import find_dotenv, load_dotenv
-from translation_engine_v3 import *
-from translation_utils import *
+from llm_transaction.translation_engine_v3 import *
+from llm_transaction.translation_utils import *
 
 found_dotenv = find_dotenv(".env")
 
@@ -115,7 +115,7 @@ if eval_fine_tuned:
     print("Evaluating fine-tuned model: " + model_name)
     FastLanguageModel.for_inference(model)  # Enable native 2x faster inference
     predictions = eval_model(model, tokenizer, datasets["test"])
-    
+
     # calc_metrics(datasets["test"]["english"], predictions, debug=True)
 
     save_results(

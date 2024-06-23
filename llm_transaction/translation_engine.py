@@ -3,9 +3,9 @@ import re
 import pandas as pd
 from datasets import load_dataset
 from unsloth import FastLanguageModel
-from transformers import TextStreamer
+from llm_transaction.transformers import TextStreamer
 from tqdm import tqdm
-from transformers import TextStreamer
+from llm_transaction.transformers import TextStreamer
 
 print(f"loading {__file__}")
 
