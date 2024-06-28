@@ -84,7 +84,7 @@ pip install -r requirements.txt
 - By default, environment variables are loaded from the `.env.example` file.
 - To customize settings, copy `.env.example` to `.env` and update it for your local runs.
 
-5. Run upyter notebooks or the automated script:
+5. Run Jupyter notebooks or the automated script:
 
 ```
 ./scripts/tune-small.sh
