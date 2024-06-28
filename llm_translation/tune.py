@@ -1,8 +1,8 @@
 import os
 import torch
 from dotenv import find_dotenv, load_dotenv
-from llm_transaction.translation_engine_v3 import *
-from llm_transaction.translation_utils import *
+from llm_translation.translation_engine_v3 import *
+from llm_translation.translation_utils import *
 
 found_dotenv = find_dotenv(".env")
 

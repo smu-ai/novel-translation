@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BASEDIR=$(dirname "$0")
-cd $BASEDIR
+cd $BASEDIR/..
 echo Current Directory:
 pwd
 
@@ -16,12 +16,12 @@ grep MemTotal /proc/meminfo
 
 export MODEL_NAME=unsloth/Qwen2-7B-Instruct
 echo Tuning $MODEL_NAME
-python llm_transaction/tune.py
+python llm_translation/tune.py
 
 export MODEL_NAME=unsloth/mistral-7b-instruct-v0.3
 echo Tuning $MODEL_NAME
-python llm_transaction/tune.py
+python llm_translation/tune.py
 
 export MODEL_NAME=gradientai/Llama-3-8B-Instruct-Gradient-1048k
 echo Tuning $MODEL_NAME
-python llm_transaction/tune.py
+python llm_translation/tune.py

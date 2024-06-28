@@ -78,7 +78,7 @@ Tuning unsloth/Qwen2-7B-Instruct
 Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
 Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
 🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
-loading /common2/dh.huang.2023/code/novel-translation/translation_engine_v3.py
+loading /common2/dh.huang.2023/code/novel-translation/llm_translation/translation_engine_v3.py
 loading env vars from: /common2/dh.huang.2023/code/novel-translation/.env
 unsloth/Qwen2-7B-Instruct True 2048 10 None datasets/mac/mac.tsv results/mac-results.csv True True True
 (1) GPU = NVIDIA L40. Max memory = 44.322 GB.

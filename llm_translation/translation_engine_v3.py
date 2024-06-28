@@ -4,9 +4,9 @@ from datasets import load_dataset
 import torch
 from unsloth import FastLanguageModel, is_bfloat16_supported
 from trl import SFTTrainer
-from llm_transaction.transformers import TrainingArguments, TextStreamer
+from llm_translation.transformers import TrainingArguments, TextStreamer
 from tqdm import tqdm
-from llm_transaction.translation_utils import *
+from llm_translation.translation_utils import *
 
 print(f"loading {__file__}")
 
